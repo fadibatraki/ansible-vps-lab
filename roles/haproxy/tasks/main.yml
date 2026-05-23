@@ -1,0 +1,56 @@
+---
+- name: Install haproxy and openssl
+  apt:
+    name:
+      - haproxy
+      - openssl
+    state: present
+    update_cache: yes
+
+- name: Create HAProxy certs directory
+  file:
+    path: /etc/haproxy/certs
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Generate self-signed SSL certificate if missing
+  command: >
+    openssl req -x509 -nodes -days 365
+    -newkey rsa:2048
+    -keyout /etc/haproxy/certs/first-test.key
+    -out /etc/haproxy/certs/first-test.crt
+    -subj "/CN=first-test.de"
+  args:
+    creates: /etc/haproxy/certs/first-test.crt
+
+- name: Create HAProxy PEM file
+  shell: cat /etc/haproxy/certs/first-test.crt /etc/haproxy/certs/first-test.key > /etc/haproxy/certs/first-test.pem
+  args:
+    creates: /etc/haproxy/certs/first-test.pem
+
+- name: Set PEM permissions
+  file:
+    path: /etc/haproxy/certs/first-test.pem
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Copy HAProxy config
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Check HAProxy config
+  command: haproxy -c -f /etc/haproxy/haproxy.cfg
+  changed_when: false
+
+- name: Restart HAProxy
+  systemd:
+    name: haproxy
+    state: restarted
+    enabled: yes

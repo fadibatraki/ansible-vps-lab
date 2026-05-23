@@ -1,0 +1,75 @@
+---
+- name: Install nodejs and npm
+  apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+    update_cache: yes
+
+- name: Create app directories
+  file:
+    path: "/home/fadi/{{ item }}"
+    state: directory
+    owner: fadi
+    group: fadi
+    mode: '0755'
+  loop:
+    - node-app-1
+    - node-app-2
+
+
+- name: Copy app 1 server.js
+  copy:
+    src: server1.js
+    dest: /home/fadi/node-app-1/server.js
+    owner: fadi
+    group: fadi
+    mode: '0644'
+
+- name: Copy app 2 server.js
+  copy:
+    src: server2.js
+    dest: /home/fadi/node-app-2/server.js
+    owner: fadi
+    group: fadi
+    mode: '0644'
+
+
+- name: Install express in app 1
+  npm:
+    path: /home/fadi/node-app-1
+    name: express
+
+- name: Install express in app 2
+  npm:
+    path: /home/fadi/node-app-2
+    name: express
+
+
+- name: Copy node app 1 service
+  template:
+    src: node-app-1.service.j2
+    dest: /etc/systemd/system/node-app-1.service
+
+- name: Copy node app 2 service
+  template:
+    src: node-app-2.service.j2
+    dest: /etc/systemd/system/node-app-2.service
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start node app 1
+  systemd:
+    name: node-app-1
+    enabled: yes
+    state: started
+
+- name: Enable and start node app 2
+  systemd:
+    name: node-app-2
+    enabled: yes
+    state: started
+

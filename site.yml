@@ -1,0 +1,10 @@
+---
+- name: Configure VPS
+  hosts: vps
+  become: true
+
+  roles:
+    - node_apps
+    - nginx
+    - bind
+    - haproxy

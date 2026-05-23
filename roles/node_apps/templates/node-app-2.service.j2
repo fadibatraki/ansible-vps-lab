@@ -1,0 +1,14 @@
+[Unit]
+Description=Node App 2
+After=network.target
+
+[Service]
+Type=simple
+User=fadi
+WorkingDirectory=/home/fadi/node-app-2
+ExecStart=/usr/bin/node /home/fadi/node-app-2/server.js
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
