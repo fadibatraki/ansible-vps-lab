@@ -1,0 +1,35 @@
+name: Ansible CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ansible-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Check Ansible syntax
+        run: |
+          ansible-playbook -i inventory.ini site.yml --syntax-check
+
+      - name: Check project structure
+        run: |
+          test -f site.yml
+          test -f inventory.ini
+          test -d roles/node_apps
+          test -d roles/nginx
+          test -d roles/bind
+          test -d roles/haproxy
