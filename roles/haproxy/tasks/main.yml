@@ -15,27 +15,26 @@
     group: root
     mode: '0755'
 
-- name: Generate self-signed SSL certificate if missing
-  command: >
-    openssl req -x509 -nodes -days 365
-    -newkey rsa:2048
-    -keyout /etc/haproxy/certs/first-test.key
-    -out /etc/haproxy/certs/first-test.crt
-    -subj "/CN=first-test.de"
-  args:
-    creates: /etc/haproxy/certs/first-test.crt
+- name: Create HAProxy cert directory
+  file:
+    path: /etc/haproxy/certs
+    state: directory
+    mode: '0755'
 
-- name: Create HAProxy PEM file
-  shell: cat /etc/haproxy/certs/first-test.crt /etc/haproxy/certs/first-test.key > /etc/haproxy/certs/first-test.pem
+- name: Create HAProxy PEM from Let's Encrypt certificate
+  shell: |
+    cat \
+    /etc/letsencrypt/live/ansible.ehjoz.app/fullchain.pem \
+    /etc/letsencrypt/live/ansible.ehjoz.app/privkey.pem \
+    > /etc/haproxy/certs/ansible.ehjoz.app.pem
   args:
-    creates: /etc/haproxy/certs/first-test.pem
+    executable: /bin/bash
 
 - name: Set PEM permissions
   file:
-    path: /etc/haproxy/certs/first-test.pem
-    owner: root
-    group: root
+    path: /etc/haproxy/certs/ansible.ehjoz.app.pem
     mode: '0600'
+
 
 - name: Copy HAProxy config
   template:
