@@ -1,7 +1,7 @@
 ---
 - name: Install bind9 packages
   apt:
-    name:
+    name: 
       - bind9
       - bind9-utils
       - bind9-doc
