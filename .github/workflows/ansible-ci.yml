@@ -19,10 +19,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Ansible
+      - name: Verify Ansible
         run: |
-          sudo apt update
-          sudo apt install -y ansible
+          ansible --version
 
       - name: Check Ansible syntax
         run: |
@@ -46,18 +45,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Ansible
+      - name: Create local Ansible inventory
         run: |
-          sudo apt update
-          sudo apt install -y ansible
+          cat > local_inventory.ini <<EOF
+          [vps]
+          localhost ansible_connection=local
+          EOF
 
       - name: Deploy locally with Ansible
         env:
           BECOME_PASSWORD: ${{ secrets.VPS_ANSIBLE_BECOME_PASSWORD }}
         run: |
           ansible-playbook \
-            -i "localhost," \
-            -c local \
+            -i local_inventory.ini \
             site.yml \
             -e ansible_become_password="$BECOME_PASSWORD"
 
