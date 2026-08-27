@@ -13,7 +13,7 @@ on:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
@@ -40,7 +40,7 @@ jobs:
   deploy:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
@@ -51,34 +51,13 @@ jobs:
           sudo apt update
           sudo apt install -y ansible
 
-      - name: Configure SSH
-        env:
-          SSH_PRIVATE_KEY_B64: ${{ secrets.VPS_ANSIBLE_SSH_PRIVATE_KEY }}
-          VPS_HOST: ${{ secrets.VPS_ANSIBLE_HOST }}
-          VPS_PORT: ${{ secrets.VPS_ANSIBLE_PORT }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/github_actions_ansible
-          chmod 600 ~/.ssh/github_actions_ansible
-          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
-
-      - name: Create CI inventory
-        env:
-          VPS_HOST: ${{ secrets.VPS_ANSIBLE_HOST }}
-          VPS_USER: ${{ secrets.VPS_ANSIBLE_USER }}
-          VPS_PORT: ${{ secrets.VPS_ANSIBLE_PORT }}
-        run: |
-          cat > ci_inventory.ini <<EOF
-          [vps]
-          $VPS_HOST ansible_user=$VPS_USER ansible_port=$VPS_PORT ansible_ssh_private_key_file=~/.ssh/github_actions_ansible
-          EOF
-
-      - name: Deploy with Ansible
+      - name: Deploy locally with Ansible
         env:
           BECOME_PASSWORD: ${{ secrets.VPS_ANSIBLE_BECOME_PASSWORD }}
         run: |
           ansible-playbook \
-            -i ci_inventory.ini \
+            -i "localhost," \
+            -c local \
             site.yml \
             -e ansible_become_password="$BECOME_PASSWORD"
 
