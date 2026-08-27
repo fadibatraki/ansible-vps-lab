@@ -53,12 +53,12 @@ jobs:
 
       - name: Configure SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_ANSIBLE_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.VPS_ANSIBLE_SSH_PRIVATE_KEY }}
           VPS_HOST: ${{ secrets.VPS_ANSIBLE_HOST }}
           VPS_PORT: ${{ secrets.VPS_ANSIBLE_PORT }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/github_actions_ansible
+          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/github_actions_ansible
           chmod 600 ~/.ssh/github_actions_ansible
           ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
 
