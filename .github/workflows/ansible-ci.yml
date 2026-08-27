@@ -1,15 +1,18 @@
-name: Ansible CI
+name: Ansible CI/CD
 
 on:
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
 
+  workflow_dispatch:
+
 jobs:
-  ansible-check:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,3 +36,55 @@ jobs:
           test -d roles/nginx
           test -d roles/bind
           test -d roles/haproxy
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_ANSIBLE_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_ANSIBLE_HOST }}
+          VPS_PORT: ${{ secrets.VPS_ANSIBLE_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/github_actions_ansible
+          chmod 600 ~/.ssh/github_actions_ansible
+          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Create CI inventory
+        env:
+          VPS_HOST: ${{ secrets.VPS_ANSIBLE_HOST }}
+          VPS_USER: ${{ secrets.VPS_ANSIBLE_USER }}
+          VPS_PORT: ${{ secrets.VPS_ANSIBLE_PORT }}
+        run: |
+          cat > ci_inventory.ini <<EOF
+          [vps]
+          $VPS_HOST ansible_user=$VPS_USER ansible_port=$VPS_PORT ansible_ssh_private_key_file=~/.ssh/github_actions_ansible
+          EOF
+
+      - name: Deploy with Ansible
+        env:
+          BECOME_PASSWORD: ${{ secrets.VPS_ANSIBLE_BECOME_PASSWORD }}
+        run: |
+          ansible-playbook \
+            -i ci_inventory.ini \
+            site.yml \
+            -e ansible_become_password="$BECOME_PASSWORD"
+
+      - name: Test deployed apps
+        run: |
+          curl -fsS https://ansible.ehjoz.app/app1
+          echo
+          curl -fsS https://ansible.ehjoz.app/app2
+          echo
