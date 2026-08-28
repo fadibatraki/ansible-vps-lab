@@ -30,6 +30,14 @@
   args:
     executable: /bin/bash
 
+- name: Combine GREEN SSL certificate and key for HAProxy
+  shell: |
+    cat /etc/letsencrypt/live/green.ansible.ehjoz.app/fullchain.pem \
+        /etc/letsencrypt/live/green.ansible.ehjoz.app/privkey.pem \
+        > /etc/haproxy/certs/green.ansible.ehjoz.app.pem
+  args:
+    creates: /etc/haproxy/certs/green.ansible.ehjoz.app.pem
+
 - name: Set PEM permissions
   file:
     path: /etc/haproxy/certs/ansible.ehjoz.app.pem
