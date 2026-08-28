@@ -1,0 +1,14 @@
+[Unit]
+Description=Node GREEN Application
+After=network.target
+
+[Service]
+Type=simple
+User=fadi
+WorkingDirectory=/home/fadi/node-app-green
+ExecStart=/usr/bin/node /home/fadi/node-app-green/server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -10,3 +10,9 @@
   ansible.builtin.systemd:
     name: node-app-2
     state: restarted
+
+- name: Restart node app green
+  become: true
+  ansible.builtin.systemd:
+    name: node-app-green
+    state: restarted
