@@ -23,7 +23,6 @@ frontend http_front
     default_backend nginx_backend
 
 frontend https_front
-   frontend https_front
     bind *:443 ssl crt /etc/haproxy/certs/ansible.ehjoz.app.pem crt /etc/haproxy/certs/green.ansible.ehjoz.app.pem
     mode http
     default_backend nginx_backend
